@@ -21,7 +21,6 @@
     width: 200px;
   }
   
-  /* Weekdays Header */
   .weekdays-header {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -34,7 +33,6 @@
     padding: 10px;
   }
   
-  /* Days Grid */
   .days-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -42,7 +40,6 @@
     min-height: 600px;
   }
   
-  /* Day Cell */
   .days-grid .day-cell {
     border: 1px solid #e0e0e0;
     border-radius: 4px;
@@ -59,7 +56,6 @@
     border: 2px solid #3f51b5;
   }
   
-  /* Day Header */
   .days-grid .day-cell .day-header {
     display: flex;
     justify-content: space-between;
@@ -81,12 +77,10 @@
     font-size: 18px;
   }
   
-  /* Appointments Container */
   .days-grid .day-cell .appointments-container {
     min-height: 60px;
   }
   
-  /* Appointment Item */
   .days-grid .day-cell .appointments-container .appointment-item {
     margin-bottom: 8px;
     cursor: move;
@@ -102,7 +96,7 @@
     transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
   }
   
-  /* Calendar Panel Overrides */
+
   .calendar-panel .mat-calendar-period-button {
     pointer-events: none;
   }

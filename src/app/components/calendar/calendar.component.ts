@@ -32,7 +32,7 @@ import { MatInputModule } from '@angular/material/input';
     AppointmentComponent,
     MatFormFieldModule,
     ReactiveFormsModule,
-    MatInputModule,        // Add this
+    MatInputModule,      
 
 ],
   templateUrl: './calendar.component.html',
@@ -72,23 +72,18 @@ export class CalendarComponent implements AfterViewInit {
     const year = date.getFullYear();
     const month = date.getMonth();
     
-    // Get first day of month
     const firstDay = new Date(year, month, 1);
-    // Get last day of month
     const lastDay = new Date(year, month + 1, 0);
     
-    // Generate all days in month
     for (let i = 1; i <= lastDay.getDate(); i++) {
       this.days.push(new Date(year, month, i));
     }
     
-    // Add padding days from previous month
     const firstDayOfWeek = firstDay.getDay();
     for (let i = 0; i < firstDayOfWeek; i++) {
       this.days.unshift(new Date(year, month, -i));
     }
     
-    // Add padding days from next month
     const lastDayOfWeek = lastDay.getDay();
     for (let i = 1; i < (7 - lastDayOfWeek); i++) {
       this.days.push(new Date(year, month + 1, i));
