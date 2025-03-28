@@ -1,0 +1,9 @@
+.appointment-card {
+    margin-bottom: 8px;
+    
+    mat-card-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding: 8px;
+    }
+  }

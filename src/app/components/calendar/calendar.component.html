@@ -1,0 +1,28 @@
+<div class="calendar-container">
+    <h1>Calendar Week View</h1>
+    
+    <div class="days-container" cdkDropListGroup>
+      @for (day of days; track day) {
+        <div class="day-column" cdkDropList 
+             (cdkDropListDropped)="drop($event, day)"
+             [cdkDropListData]="getAppointmentsForDay(day)"
+             [cdkDropListConnectedTo]="connectedDropLists">
+          <mat-card class="day-header">
+            <h2>{{ day | date:'EEEE' }}</h2>
+            <p>{{ day | date:'MMM d' }}</p>
+          </mat-card>
+  
+          @for (appointment of getAppointmentsForDay(day); track appointment.id) {
+            <div cdkDrag class="appointment-container" [cdkDragData]="appointment">
+              <app-appointment 
+                [appointment]="appointment" 
+                (delete)="onAppointmentDeleted(appointment.id)">
+
+               >
+              </app-appointment>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>

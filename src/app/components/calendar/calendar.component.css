@@ -1,0 +1,30 @@
+.calendar-container {
+  padding: 20px;
+  
+  .days-container {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 16px 0;
+    
+    .day-column {
+      min-width: 250px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      
+      .day-header {
+        margin-bottom: 8px;
+      }
+      
+      .appointment-container {
+        cursor: move;
+      }
+    }
+  }
+}
+
+

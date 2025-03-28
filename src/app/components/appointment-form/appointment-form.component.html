@@ -1,0 +1,63 @@
+<h2 mat-dialog-title>
+    @if (data) {
+      Edit Appointment
+    } @else {
+      Add New Appointment
+    }
+  </h2>
+  
+  <mat-dialog-content>
+    <form [formGroup]="form">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Title</mat-label>
+        <input matInput formControlName="title" required>
+        @if (form.get('title')?.hasError('required')) {
+          <mat-error>Title is required</mat-error>
+        }
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Description</mat-label>
+        <textarea matInput formControlName="description" rows="3"></textarea>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Date</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="date" required>
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        @if (form.get('date')?.hasError('required')) {
+          <mat-error>Date is required</mat-error>
+        }
+      </mat-form-field>
+  
+      <div class="time-fields">
+        <mat-form-field appearance="outline">
+          <mat-label>Start Time</mat-label>
+          <input matInput type="time" formControlName="startTime" required>
+          @if (form.get('startTime')?.hasError('required')) {
+            <mat-error>Start time is required</mat-error>
+          }
+        </mat-form-field>
+  
+        <mat-form-field appearance="outline">
+          <mat-label>End Time</mat-label>
+          <input matInput type="time" formControlName="endTime" required>
+          @if (form.get('endTime')?.hasError('required')) {
+            <mat-error>End time is required</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </form>
+  </mat-dialog-content>
+  
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+      @if (data) {
+        Update
+      } @else {
+        Save
+      }
+    </button>
+  </mat-dialog-actions>
