@@ -1,12 +1,19 @@
-import { Component, inject, ViewChildren, AfterViewInit, ChangeDetectorRef, QueryList } from '@angular/core';
+import { Component, inject, ViewChildren, AfterViewInit, QueryList, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { CdkDragDrop, CdkDrag, CdkDropList, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { AppointmentComponent } from '../appointment/appointment.component';
+import { AppointmentFormComponent } from '../appointment-form/appointment-form.component';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { Appointment } from '../../models/appointment';
 import { AppointmentService } from '../../services/appointment/appointment.service';
+import { AppointmentComponent } from "../appointment/appointment.component";
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
 
 @Component({
   selector: 'app-calendar',
@@ -18,24 +25,36 @@ import { AppointmentService } from '../../services/appointment/appointment.servi
     MatIconModule,
     CdkDropList,
     CdkDrag,
+    AppointmentFormComponent,
+    DatePipe,
+    MatDatepickerModule,
+    MatNativeDateModule,
     AppointmentComponent,
-    DatePipe
-  ],
+    MatFormFieldModule,
+    ReactiveFormsModule,
+    MatInputModule,        // Add this
+
+],
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.css']
 })
 export class CalendarComponent implements AfterViewInit {
   private appointmentService = inject(AppointmentService);
+  private dialog = inject(MatDialog);
+  today = new Date();
   private cdRef = inject(ChangeDetectorRef);
-  
+
   days: Date[] = [];
   appointments: Appointment[] = [];
-  connectedDropLists: CdkDropList<any>[] = [];
+  currentMonth = new Date().getMonth();
+  currentYear = new Date().getFullYear();
+  selectedDate = new Date();
   
   @ViewChildren(CdkDropList) dropLists!: QueryList<CdkDropList>;
+  connectedDropLists: CdkDropList[] = [];
 
   constructor() {
-    this.generateWeekDays();
+    this.generateMonthDays(this.selectedDate);
     this.loadAppointments();
   }
 
@@ -44,19 +63,36 @@ export class CalendarComponent implements AfterViewInit {
     this.cdRef.detectChanges();
   }
 
-  generateWeekDays() {
-    const today = new Date();
-    this.days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      return date;
-    });
+  isToday(day: Date): boolean {
+    return day.toDateString() === this.today.toDateString();
   }
 
-  onAppointmentDeleted(id: string) {
-    this.appointmentService.deleteAppointment(id).subscribe(() => {
-      this.loadAppointments(); 
-    });
+  generateMonthDays(date: Date) {
+    this.days = [];
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    
+    // Get first day of month
+    const firstDay = new Date(year, month, 1);
+    // Get last day of month
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // Generate all days in month
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      this.days.push(new Date(year, month, i));
+    }
+    
+    // Add padding days from previous month
+    const firstDayOfWeek = firstDay.getDay();
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      this.days.unshift(new Date(year, month, -i));
+    }
+    
+    // Add padding days from next month
+    const lastDayOfWeek = lastDay.getDay();
+    for (let i = 1; i < (7 - lastDayOfWeek); i++) {
+      this.days.push(new Date(year, month + 1, i));
+    }
   }
 
   loadAppointments() {
@@ -69,6 +105,32 @@ export class CalendarComponent implements AfterViewInit {
     return this.appointments.filter(app => {
       const appDate = new Date(app.date);
       return appDate.toDateString() === day.toDateString();
+    });
+  }
+
+  onMonthChanged(event: any) {
+    this.selectedDate = event;
+    this.generateMonthDays(this.selectedDate);
+  }
+
+  addAppointment(day: Date) {
+    const dialogRef = this.dialog.open(AppointmentFormComponent, {
+      width: '500px',
+      data: { date: day }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.appointmentService.addAppointment(result).subscribe(() => {
+          this.loadAppointments();
+        });
+      }
+    });
+  }
+
+  onAppointmentDeleted(id: string) {
+    this.appointmentService.deleteAppointment(id).subscribe(() => {
+      this.loadAppointments();
     });
   }
 
