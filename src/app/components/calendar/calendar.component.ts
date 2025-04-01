@@ -1,19 +1,21 @@
-import { Component, inject, ViewChildren, AfterViewInit, QueryList, ChangeDetectorRef } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { Component, ViewChildren, QueryList, ChangeDetectorRef, OnDestroy, inject } from '@angular/core';
+import { CommonModule, DatePipe, AsyncPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { CdkDragDrop, CdkDrag, CdkDropList, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { AppointmentFormComponent } from '../appointment-form/appointment-form.component';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
+import { Subject, takeUntil } from 'rxjs';
+import { AppointmentComponent } from "../appointment/appointment.component";
+import { AppointmentFormComponent } from '../appointment-form/appointment-form.component';
 import { Appointment } from '../../models/appointment';
 import { AppointmentService } from '../../services/appointment/appointment.service';
-import { AppointmentComponent } from "../appointment/appointment.component";
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
+import { CalendarService } from '../../services/calendar/calendar.service';
 
 @Component({
   selector: 'app-calendar',
@@ -25,87 +27,57 @@ import { MatInputModule } from '@angular/material/input';
     MatIconModule,
     CdkDropList,
     CdkDrag,
-    AppointmentFormComponent,
-    DatePipe,
     MatDatepickerModule,
     MatNativeDateModule,
     AppointmentComponent,
     MatFormFieldModule,
     ReactiveFormsModule,
-    MatInputModule,      
-
-],
+    MatInputModule,
+    AsyncPipe,
+    AppointmentFormComponent,
+    DatePipe
+  ],
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.css']
 })
-export class CalendarComponent implements AfterViewInit {
+export class CalendarComponent implements OnDestroy {
+  private destroy$ = new Subject<void>();
+  private calendarService = inject(CalendarService);
   private appointmentService = inject(AppointmentService);
   private dialog = inject(MatDialog);
-  today = new Date();
   private cdRef = inject(ChangeDetectorRef);
 
-  days: Date[] = [];
-  appointments: Appointment[] = [];
-  currentMonth = new Date().getMonth();
-  currentYear = new Date().getFullYear();
+  today = new Date();
   selectedDate = new Date();
   
   @ViewChildren(CdkDropList) dropLists!: QueryList<CdkDropList>;
   connectedDropLists: CdkDropList[] = [];
 
-  constructor() {
-    this.generateMonthDays(this.selectedDate);
-    this.loadAppointments();
-  }
-
+  calendarData$ = this.calendarService.getCalendarData();
+  
   ngAfterViewInit() {
     this.connectedDropLists = this.dropLists.toArray();
     this.cdRef.detectChanges();
+  }
+
+  trackByDay(index: number, day: Date): string {
+    return day.toISOString();
   }
 
   isToday(day: Date): boolean {
     return day.toDateString() === this.today.toDateString();
   }
 
-  generateMonthDays(date: Date) {
-    this.days = [];
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    
-    for (let i = 1; i <= lastDay.getDate(); i++) {
-      this.days.push(new Date(year, month, i));
-    }
-    
-    const firstDayOfWeek = firstDay.getDay();
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      this.days.unshift(new Date(year, month, -i));
-    }
-    
-    const lastDayOfWeek = lastDay.getDay();
-    for (let i = 1; i < (7 - lastDayOfWeek); i++) {
-      this.days.push(new Date(year, month + 1, i));
-    }
-  }
-
-  loadAppointments() {
-    this.appointmentService.getAppointments().subscribe(appointments => {
-      this.appointments = appointments;
-    });
-  }
-
-  getAppointmentsForDay(day: Date): Appointment[] {
-    return this.appointments.filter(app => {
+  getAppointmentsForDay(day: Date, appointments: Appointment[]): Appointment[] {
+    return appointments.filter(app => {
       const appDate = new Date(app.date);
       return appDate.toDateString() === day.toDateString();
     });
   }
 
-  onMonthChanged(event: any) {
-    this.selectedDate = event;
-    this.generateMonthDays(this.selectedDate);
+  onMonthChanged(date: Date) {
+    this.selectedDate = date;
+    this.calendarService.setSelectedDate(date);
   }
 
   addAppointment(day: Date) {
@@ -114,19 +86,21 @@ export class CalendarComponent implements AfterViewInit {
       data: { date: day }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.appointmentService.addAppointment(result).subscribe(() => {
-          this.loadAppointments();
-        });
-      }
-    });
+    dialogRef.afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(result => {
+        if (result) {
+          this.appointmentService.addAppointment(result)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe();
+        }
+      });
   }
 
   onAppointmentDeleted(id: string) {
-    this.appointmentService.deleteAppointment(id).subscribe(() => {
-      this.loadAppointments();
-    });
+    this.appointmentService.deleteAppointment(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
   }
 
   drop(event: CdkDragDrop<Appointment[]>, day: Date) {
@@ -145,15 +119,16 @@ export class CalendarComponent implements AfterViewInit {
         endTime: this.adjustEndTime(oldDate, newDate, appointment.endTime)
       };
       
-      this.appointmentService.updateAppointment(updatedAppointment).subscribe(() => {
-        transferArrayItem(
-          event.previousContainer.data,
-          event.container.data,
-          event.previousIndex,
-          event.currentIndex
-        );
-        this.appointments = [...this.appointments];
-      });
+      this.appointmentService.updateAppointment(updatedAppointment)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          transferArrayItem(
+            event.previousContainer.data,
+            event.container.data,
+            event.previousIndex,
+            event.currentIndex
+          );
+        });
     }
   }
 
@@ -161,5 +136,10 @@ export class CalendarComponent implements AfterViewInit {
     const oldEnd = new Date(endTime);
     const duration = oldEnd.getTime() - oldStart.getTime();
     return new Date(newStart.getTime() + duration).toISOString();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

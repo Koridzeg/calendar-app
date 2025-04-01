@@ -1,27 +1,28 @@
 <div class="calendar-container">
-    <div class="calendar-header">
-      <h1>Calendar</h1>
-      <mat-form-field>
-        <mat-label>Month and Year</mat-label>
-        <input matInput [matDatepicker]="picker" 
-               (dateChange)="onMonthChanged($event.value)"
-               [value]="selectedDate">
-        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-datepicker #picker startView="multi-year" 
-                        (yearSelected)="picker.close()"
-                        panelClass="calendar-panel">
-        </mat-datepicker>
-      </mat-form-field>
-    </div>
-  
-    <div class="weekdays-header">
-      @for (day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; track $index) {
-        <div class="weekday">{{ day }}</div>
-      }
-    </div>
-  
-    <div class="days-grid" cdkDropListGroup>
-      @for (day of days; track day; let i = $index) {
+  <div class="calendar-header">
+    <h1>Calendar</h1>
+    <mat-form-field>
+      <mat-label>Month and Year</mat-label>
+      <input matInput [matDatepicker]="picker" 
+             (dateChange)="onMonthChanged($event.value)"
+             [value]="selectedDate">
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker startView="multi-year" 
+                      (yearSelected)="picker.close()"
+                      panelClass="calendar-panel">
+      </mat-datepicker>
+    </mat-form-field>
+  </div>
+
+  <div class="weekdays-header">
+    @for (day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; track $index) {
+      <div class="weekday">{{ day }}</div>
+    }
+  </div>
+
+  <div class="days-grid" cdkDropListGroup>
+    @if (calendarData$ | async; as data) {
+      @for (day of data.days; track trackByDay($index, day); let i = $index) {
         <div class="day-cell" 
              [class.current-month]="day.getMonth() === selectedDate.getMonth()"
              [class.today]="isToday(day)">
@@ -32,13 +33,13 @@
               <mat-icon>add</mat-icon>
             </button>
           </div>
-  
+
           <div class="appointments-container" cdkDropList
                (cdkDropListDropped)="drop($event, day)"
-               [cdkDropListData]="getAppointmentsForDay(day)"
+               [cdkDropListData]="getAppointmentsForDay(day, data.appointments)"
                [cdkDropListConnectedTo]="connectedDropLists">
             
-            @for (appointment of getAppointmentsForDay(day); track appointment.id) {
+            @for (appointment of getAppointmentsForDay(day, data.appointments); track appointment.id) {
               <div cdkDrag class="appointment-item">
                 <app-appointment 
                   [appointment]="appointment" 
@@ -49,5 +50,6 @@
           </div>
         </div>
       }
-    </div>
+    }
   </div>
+</div>
