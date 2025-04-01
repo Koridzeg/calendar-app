@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Appointment } from '../../models/appointment';
 
 @Injectable({
@@ -10,7 +11,6 @@ export class AppointmentService {
   appointments$ = this.appointmentsSubject.asObservable();
 
   constructor() {
-    // Initialize with some sample data
     const sampleAppointments: Appointment[] = [
       {
         id: '1',
@@ -32,6 +32,12 @@ export class AppointmentService {
 
   getAppointments(): Observable<Appointment[]> {
     return this.appointments$;
+  }
+
+  getAppointment(id: string): Observable<Appointment | undefined> {
+    return this.appointments$.pipe(
+      map(appointments => appointments.find(a => a.id === id))
+    );
   }
 
   addAppointment(appointment: Appointment): Observable<Appointment> {

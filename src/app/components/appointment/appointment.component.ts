@@ -1,12 +1,11 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatDialog } from '@angular/material/dialog';
-import { AppointmentFormComponent } from '../appointment-form/appointment-form.component';
+import { Router } from '@angular/router';
 import { Appointment } from '../../models/appointment';
-import { AppointmentService } from '../../services/appointment/appointment.service';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-appointment',
@@ -15,26 +14,22 @@ import { AppointmentService } from '../../services/appointment/appointment.servi
   templateUrl: './appointment.component.html',
   styleUrls: ['./appointment.component.css']
 })
-export class AppointmentComponent {
+export class AppointmentComponent implements OnDestroy {
   @Input() appointment!: Appointment;
   @Output() delete = new EventEmitter<string>();
-  private dialog = inject(MatDialog);
-  private appointmentService = inject(AppointmentService);
+  private destroy$ = new Subject<void>();
+  private router = inject(Router);
 
   onDelete() {
     this.delete.emit(this.appointment.id);
   }
 
   onEdit() {
-    const dialogRef = this.dialog.open(AppointmentFormComponent, {
-      width: '400px',
-      data: { ...this.appointment }
-    });
+    this.router.navigate(['/appointment/edit', this.appointment.id]);
+  }
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.appointmentService.updateAppointment(result).subscribe();
-      }
-    });
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

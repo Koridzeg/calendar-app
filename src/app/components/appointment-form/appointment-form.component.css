@@ -1,0 +1,30 @@
+.appointment-form-container {
+    padding: 24px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .form-content {
+    padding: 16px 0;
+  }
+  
+  .full-width {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+  
+  .time-fields {
+    display: flex;
+    gap: 16px;
+  }
+  
+  .time-fields mat-form-field {
+    flex: 1;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+  }

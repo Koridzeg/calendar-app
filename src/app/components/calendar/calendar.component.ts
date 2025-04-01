@@ -16,6 +16,7 @@ import { AppointmentFormComponent } from '../appointment-form/appointment-form.c
 import { Appointment } from '../../models/appointment';
 import { AppointmentService } from '../../services/appointment/appointment.service';
 import { CalendarService } from '../../services/calendar/calendar.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-calendar',
@@ -34,8 +35,7 @@ import { CalendarService } from '../../services/calendar/calendar.service';
     ReactiveFormsModule,
     MatInputModule,
     AsyncPipe,
-    AppointmentFormComponent,
-    DatePipe
+
   ],
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.css']
@@ -46,6 +46,7 @@ export class CalendarComponent implements OnDestroy {
   private appointmentService = inject(AppointmentService);
   private dialog = inject(MatDialog);
   private cdRef = inject(ChangeDetectorRef);
+  private router = inject(Router)
 
   today = new Date();
   selectedDate = new Date();
@@ -81,22 +82,9 @@ export class CalendarComponent implements OnDestroy {
   }
 
   addAppointment(day: Date) {
-    const dialogRef = this.dialog.open(AppointmentFormComponent, {
-      width: '500px',
-      data: { date: day }
-    });
-
-    dialogRef.afterClosed()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(result => {
-        if (result) {
-          this.appointmentService.addAppointment(result)
-            .pipe(takeUntil(this.destroy$))
-            .subscribe();
-        }
-      });
+    const dateStr = day.toISOString().split('T')[0];
+    this.router.navigate(['/appointment/new', dateStr]);
   }
-
   onAppointmentDeleted(id: string) {
     this.appointmentService.deleteAppointment(id)
       .pipe(takeUntil(this.destroy$))
